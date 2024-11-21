@@ -12,7 +12,7 @@ local hello = {
     ["Codex"] = true,
     ["Wave"] = true,
     ["Vegax"] = true,
-    ["Trigon"] = true,
+    ["Trigon"] = false
 }
 
 
