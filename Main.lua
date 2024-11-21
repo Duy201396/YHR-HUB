@@ -1370,7 +1370,7 @@ task.spawn(function()
     end
 end)
 local Level = Tabs.Main:AddSection("Level Farm")
-local ToggleAutoLevel = Tabs.Stack:AddToggle("ToggleAutoLevel", {Title = "Auto Farm Level", Default = _G.AutoLevel })
+local ToggleAutoLevel = Tabs.Main:AddToggle("ToggleAutoLevel", {Title = "Auto Farm Level", Default = _G.AutoLevel })
 ToggleAutoLevel:OnChanged(function(Value)
     _G.AutoLevel = Value
     
