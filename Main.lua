@@ -1463,7 +1463,7 @@ end)
 
 
 
-local ToggleAutoKatakuri = Tabs.Stack:AddToggle("ToggleAutoKatakuri", {Title = "Auto Farm Katakuri", Default = _G.AutoKatakuri })
+local ToggleAutoKatakuri = Tabs.Main:AddToggle("ToggleAutoKatakuri", {Title = "Auto Farm Katakuri", Default = _G.AutoKatakuri })
     ToggleAutoKatakuri:OnChanged(function(Value)
         _G.AutoKatakuri = Value
 end)
@@ -1730,6 +1730,7 @@ end)
                 end
             end
         end)
+        local Duyfly = Tabs.Setting:AddSection("Tween And Bypass Tp")
         local Toggle = Tabs.Setting:AddToggle("MyToggle", {Title = "Bypass TP", Default = false })
     Toggle:OnChanged(function(Value)
         BypassTP = Value
