@@ -1771,6 +1771,20 @@ local function StopTween()
     end
     _G.StopTween = false
 end
+_G.FastAttackAura = true
+spawn(
+    function()
+        while task.wait(_G.FastAttackDelay) do
+            if _G.FastAttack or _G.FastAttackAura then
+                pcall(
+                    function()
+                        Attack()
+                    end
+                )
+            end
+        end
+    end
+)
     local ToggleFastAttackOld = Tabs.Setting:AddToggle("ToggleFastAttackOld", {Title = "Fast Attack", Default = true })
         ToggleFastAttackOld:OnChanged(function(Value)
             _G.FastAttack = Value
