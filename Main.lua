@@ -11,7 +11,8 @@ local hello = {
     ["Solara"] = false,
     ["Codex"] = true,
     ["Wave"] = true,
-    ["Vegax"] = true
+    ["Vegax"] = true,
+    ["Trigon"] = true,
 }
 
 
