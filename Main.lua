@@ -1545,7 +1545,7 @@ end)
 
 local kkii = require(game.ReplicatedStorage.Util.CameraShaker)
 kkii:Stop()
- local Toggle = Tabs.Shop:AddToggle("MyToggle", {Title = "Bring Mob", Default = true })
+ local Toggle = Tabs.Main:AddToggle("MyToggle", {Title = "Bring Mob", Default = true })
 
     Toggle:OnChanged(function(Value)
         _G.BringMob = Value
