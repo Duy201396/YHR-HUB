@@ -1785,6 +1785,43 @@ spawn(
         end
     end
 )
+local ToggleFastAttackOld = Tabs.Setting:AddToggle("ToggleFastAttackOld", {Title = "Fast Attack", Default = true })
+        ToggleFastAttackOld:OnChanged(function(Value)
+            _G.FastAttack = Value
+        end)
+        local Camerabattu = require(game.ReplicatedStorage.Util.CameraShaker)
+        taisaoanhlaigianemhahirimii = require(game:GetService("Players").LocalPlayer.PlayerScripts.CombatFramework)
+        lon = debug.getupvalues(taisaoanhlaigianemhahirimii)[2]
+        spawn(function()
+            game:GetService("RunService").RenderStepped:Connect(function()
+                if _G.FastAttack then
+                    if typeof(lon) == "table" then
+                        pcall(function()
+                            Camerabattu:Stop()
+                            lon.activeController.timeToNextAttack = 0
+                            lon.activeController.hitboxMagnitude = 120
+                            lon.activeController.active = false
+                            lon.activeController.timeToNextBlock = 0
+                            lon.activeController.focusStart = 1655503339.0980349
+                            lon.activeController.increment = 1
+                            lon.activeController.blocking = false
+                            lon.activeController.attacking = false
+                            lon.activeController.humanoid.AutoRotate = true
+                        end)
+                    end
+                end
+            end)
+        end)
+        spawn(function()
+            game:GetService("RunService").RenderStepped:Connect(function()
+                if _G.FastAttack == true then
+                    game.Players.LocalPlayer.Character.Stun.Value = 0
+                    game.Players.LocalPlayer.Character.Busy.Value = false
+                end
+            end)
+        end)
+    
+    
 local DropdownFastAttackDelay = Tabs.Setting:AddDropdown("DropdownFastAttackDelay", {
     Title = "Fast Attack Cooldown",
     Values = {"0", "0.1", "0.15", "0.155", "0.16", "0.165", "0.17", "0.175", "0.18", "0.185"},
@@ -1994,43 +2031,6 @@ local kkii = require(game.ReplicatedStorage.Util.CameraShaker)
 kkii:Stop()
 
 
-    local ToggleFastAttackOld = Tabs.Setting:AddToggle("ToggleFastAttackOld", {Title = "Fast Attack", Default = true })
-        ToggleFastAttackOld:OnChanged(function(Value)
-            _G.FastAttack = Value
-        end)
-        local Camerabattu = require(game.ReplicatedStorage.Util.CameraShaker)
-        taisaoanhlaigianemhahirimii = require(game:GetService("Players").LocalPlayer.PlayerScripts.CombatFramework)
-        lon = debug.getupvalues(taisaoanhlaigianemhahirimii)[2]
-        spawn(function()
-            game:GetService("RunService").RenderStepped:Connect(function()
-                if _G.FastAttack then
-                    if typeof(lon) == "table" then
-                        pcall(function()
-                            Camerabattu:Stop()
-                            lon.activeController.timeToNextAttack = 0
-                            lon.activeController.hitboxMagnitude = 120
-                            lon.activeController.active = false
-                            lon.activeController.timeToNextBlock = 0
-                            lon.activeController.focusStart = 1655503339.0980349
-                            lon.activeController.increment = 1
-                            lon.activeController.blocking = false
-                            lon.activeController.attacking = false
-                            lon.activeController.humanoid.AutoRotate = true
-                        end)
-                    end
-                end
-            end)
-        end)
-        spawn(function()
-            game:GetService("RunService").RenderStepped:Connect(function()
-                if _G.FastAttack == true then
-                    game.Players.LocalPlayer.Character.Stun.Value = 0
-                    game.Players.LocalPlayer.Character.Busy.Value = false
-                end
-            end)
-        end)
-    
-    
 
     Tabs.Setting:AddButton({
         Title = "Boost FPS",
