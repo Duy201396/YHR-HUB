@@ -1820,6 +1820,180 @@ local ToggleFastAttackOld = Tabs.Setting:AddToggle("ToggleFastAttackOld", {Title
                 end
             end)
         end)
+
+
+        if not LPH_OBFUSCATED then
+            LPH_JIT_MAX = (function(...)
+                return
+            end)
+            LPH_NO_VIRTUALIZE = (function(...)
+                return ...
+            end)
+            LPH_NO_UPVALUES = (function(...)
+                return ...
+            end)
+        end
+        NoAttackAnimation = true
+        local DmgAttack = game:GetService("ReplicatedStorage").Assets.GUI:WaitForChild("DamageCounter")
+        local PC = require(game.Players.LocalPlayer.PlayerScripts.CombatFramework.Particle)
+        local RL = require(game:GetService("ReplicatedStorage").CombatFramework.RigLib)
+        local oldRL = RL.wrapAttackAnimationAsync
+        RL.wrapAttackAnimationAsync = function(a, b, c, d, func)
+            if not NoAttackAnimation then
+                return oldRL(a, b, c, 60, func)
+            end
+        
+            local Hits = {}
+            local Client = game.Players.LocalPlayer
+            local Characters = game:GetService("Workspace").Characters:GetChildren()
+            for i, v in pairs(Characters) do
+                local Human = v:FindFirstChildOfClass("Humanoid")
+                if v.Name ~= game.Players.LocalPlayer.Name and Human and Human.RootPart and Human.Health > 0 and
+                    Client:DistanceFromCharacter(Human.RootPart.Position) < 65 then
+                    table.insert(Hits, Human.RootPart)
+                end
+            end
+            local Enemies = game:GetService("Workspace").Enemies:GetChildren()
+            for i, v in pairs(Enemies) do
+                local Human = v:FindFirstChildOfClass("Humanoid")
+                if Human and Human.RootPart and Human.Health > 0 and Client:DistanceFromCharacter(Human.RootPart.Position) < 65 then
+                    table.insert(Hits, Human.RootPart)
+                end
+            end
+            a:Play(0.01, 0.01, 0.01)
+            pcall(func, Hits)
+        end
+        
+        getAllBladeHits = LPH_NO_VIRTUALIZE(function(Sizes)
+            local Hits = {}
+            local Client = game.Players.LocalPlayer
+            local Enemies = game:GetService("Workspace").Enemies:GetChildren()
+            for i, v in pairs(Enemies) do
+                local Human = v:FindFirstChildOfClass("Humanoid")
+                if Human and Human.RootPart and Human.Health > 0 and Client:DistanceFromCharacter(Human.RootPart.Position) <
+                    Sizes + 5 then
+                    table.insert(Hits, Human.RootPart)
+                end
+            end
+            return Hits
+        end)
+        
+        getAllBladeHitsPlayers = LPH_NO_VIRTUALIZE(function(Sizes)
+            local Hits = {}
+            local Client = game.Players.LocalPlayer
+            local Characters = game:GetService("Workspace").Characters:GetChildren()
+            for i, v in pairs(Characters) do
+                local Human = v:FindFirstChildOfClass("Humanoid")
+                if v.Name ~= game.Players.LocalPlayer.Name and Human and Human.RootPart and Human.Health > 0 and
+                    Client:DistanceFromCharacter(Human.RootPart.Position) < Sizes + 5 then
+                    table.insert(Hits, Human.RootPart)
+                end
+            end
+            return Hits
+        end)
+        
+        local CombatFramework = require(game:GetService("Players").LocalPlayer.PlayerScripts:WaitForChild("CombatFramework"))
+        local CombatFrameworkR = getupvalues(CombatFramework)[2]
+        local RigEven = game:GetService("ReplicatedStorage").RigControllerEvent
+        local AttackAnim = Instance.new("Animation")
+        local AttackCoolDown = 0
+        local cooldowntickFire = 0
+        local MaxFire = 1000
+        local FireCooldown = 1.0
+        local FireL = 0
+        local bladehit = {}
+        
+        CancelCoolDown = LPH_JIT_MAX(function()
+            local ac = CombatFrameworkR.activeController
+            if ac and ac.equipped then
+                AttackCoolDown = tick() + (FireCooldown or 0.288) + ((FireL / MaxFire) * 0.3)
+                RigEven.FireServer(RigEven, "weaponChange", ac.currentWeaponModel.Name)
+                FireL = FireL + 1
+                task.delay((FireCooldown or 0.288) + ((FireL + 0.4 / MaxFire) * 0.3), function()
+                    FireL = FireL - 1
+                end)
+            end
+        end)
+        
+        AttackFunction = LPH_JIT_MAX(function(typef)
+            local ac = CombatFrameworkR.activeController
+            if ac and ac.equipped then
+                local bladehit = {}
+                if typef == 1 then
+                    bladehit = getAllBladeHits(60)
+                elseif typef == 2 then
+                    bladehit = getAllBladeHitsPlayers(65)
+                else
+                    for i2, v2 in pairs(getAllBladeHits(55)) do
+                        table.insert(bladehit, v2)
+                    end
+                    for i3, v3 in pairs(getAllBladeHitsPlayers(55)) do
+                        table.insert(bladehit, v3)
+                    end
+                end
+                if #bladehit > 0 then
+                    pcall(task.spawn, ac.attack, ac)
+                    if tick() > AttackCoolDown then
+                        CancelCoolDown()
+                    end
+                    if tick() - cooldowntickFire > 0.5 then
+                        ac.timeToNextAttack = 0
+                        ac.hitboxMagnitude = 60
+                        pcall(task.spawn, ac.attack, ac)
+                        cooldowntickFire = tick()
+                    end
+                    local AMI3 = ac.anims.basic[7]
+                    local AMI2 = ac.anims.basic[9]
+                    local REALID = AMI3 or AMI2
+                    AttackAnim.AnimationId = REALID
+                    local StartP = ac.humanoid:LoadAnimation(AttackAnim)
+                    StartP:Play(0.01, 0.01, 0.01)
+                    RigEven.FireServer(RigEven, "hit", bladehit, AMI3 and 4 or 5, "")
+                    task.delay(0.5, function()
+                        StartP:Stop()
+                    end)
+                end
+            end
+        end)
+        
+        function CheckStun()
+            if game:GetService('Players').LocalPlayer.Character:FindFirstChild("Stun") then
+                return game:GetService('Players').LocalPlayer.Character.Stun.Value ~= 0
+            end
+            return false
+        end
+        Fast_Attack = true
+        NeedAttacking = true
+        spawn(function()
+            while game:GetService("RunService").Stepped:Wait() do
+                local ac = CombatFrameworkR.activeController
+                if ac and ac.equipped and not CheckStun() then
+                    if NeedAttacking and Fast_Attack then
+                        task.spawn(function()
+                            pcall(task.spawn, AttackFunction, 8)
+                        end)
+                    elseif DamageAura then
+                        task.spawn(function()
+                            pcall(task.spawn, AttackFunction, 7)
+                        end)
+                    elseif UsefastattackPlayers and Fast_Attack then
+                        task.spawn(function()
+                            pcall(task.spawn, AttackFunction, 4)
+                        end)
+                    elseif NeedAttacking and Fast_Attack == false then
+                        if ac.hitboxMagnitude ~= 55 then
+                            ac.hitboxMagnitude = 55
+                        end
+                        pcall(task.spawn, ac.attack, ac)
+                    end
+                end
+            end
+        end)
+        
+        local kkii = require(game.ReplicatedStorage.Util.CameraShaker)
+        kkii:Stop()
+        
+        
     
     
 local DropdownFastAttackDelay = Tabs.Setting:AddDropdown("DropdownFastAttackDelay", {
@@ -2003,106 +2177,3 @@ function Attack()
     )
 end
 
-
-
-    Tabs.Setting:AddButton({
-        Title = "Boost FPS",
-        Description = "",
-        Callback = function()
-            fpsboost()
-        end
-    })
-    
-    function fpsboost()
-        pcall(function()
-        local decalsyeeted = true -- Leaving this on makes games look shitty but the fps goes up by at least 20.
-        local g = game
-        local w = g.Workspace
-        local l = g.Lighting
-        local t = w.Terrain
-        t.WaterWaveSize = 0
-        t.WaterWaveSpeed = 0
-        t.WaterReflectance = 0
-        t.WaterTransparency = 0
-        l.GlobalShadows = false
-        l.FogEnd = 9e9
-        l.Brightness = 0
-        settings().Rendering.QualityLevel = "Level01"
-        for i, v in pairs(g:GetDescendants()) do
-            if v:IsA("Part") or v:IsA("Union") or v:IsA("CornerWedgePart") or v:IsA("TrussPart") then 
-                    v.Material = "Plastic"
-                    v.Reflectance = 0
-                    --v.CanCollide = false
-            elseif v:IsA("Decal") or v:IsA("Texture") and decalsyeeted then
-                    v.Transparency = 1
-            elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
-                    v.Lifetime = NumberRange.new(0)
-            elseif v:IsA("Explosion") then
-                    v.BlastPressure = 1
-                    v.BlastRadius = 1
-            elseif v:IsA("Fire") or v:IsA("SpotLight") or v:IsA("Smoke") or v:IsA("Sparkles") then
-                    v.Enabled = false
-            elseif v:IsA("MeshPart") then
-                    v.Material = "Plastic"
-                    v.Reflectance = 0
-                    v.TextureID = 10385902758728957    
-            end
-        end
-        for i, e in pairs(l:GetChildren()) do
-            if e:IsA("BlurEffect") or e:IsA("SunRaysEffect") or e:IsA("ColorCorrectionEffect") or e:IsA("BloomEffect") or e:IsA("DepthOfFieldEffect") then
-                    e.Enabled = false
-            end
-        end
-        for i, v in pairs(game:GetService("Workspace").Camera:GetDescendants()) do
-            if v.Name == ("Water;") then
-                v.Transparency = 1
-                v.Material = "Plastic"
-            end
-        end
-        end)
-        pcall(function()
-            if not game:IsLoaded() then repeat wait() until game:IsLoaded() end
-            if hookfunction and setreadonly then
-            local mt = getrawmetatable(game)
-            local old = mt.__newindex
-            setreadonly(mt, false)
-            local sda
-            sda = hookfunction(old, function(t, k, v)
-                if k == "Material" then
-                    if v ~= Enum.Material.Neon and v ~= Enum.Material.Plastic and v ~= Enum.Material.ForceField then v = Enum.Material.Plastic end
-                elseif k == "TopSurface" then v = "Smooth"
-                elseif k == "Reflectance" or k == "WaterWaveSize" or k == "WaterWaveSpeed" or k == "WaterReflectance" then v = 0
-                elseif k == "WaterTransparency" then v = 1
-                elseif k == "GlobalShadows" then v = false end
-                return sda(t, k, v)
-            end)
-            setreadonly(mt, true)
-            end
-            local g = game
-            local w = g.Workspace
-            local l = g:GetService"Lighting"
-            local t = w:WaitForChild"Terrain"
-            t.WaterWaveSize = 0
-            t.WaterWaveSpeed = 0
-            t.WaterReflectance = 0
-            t.WaterTransparency = 1
-            l.GlobalShadows = false
-        end)
-    end
-    
-    local ToggleWalkonWater = Tabs.Setting:AddToggle("ToggleWalkonWater", {Title = "Walk on Water",Description = "Đi Trên nước", Default = true })
-    ToggleWalkonWater:OnChanged(function(Value)
-      _G.WalkonWater = Value
-    end)
-    Options.ToggleWalkonWater:SetValue(true)
-    spawn(function()
-        while task.wait() do
-            pcall(function()
-                if _G.WalkonWater then
-                    game:GetService("Workspace").Map["WaterBase-Plane"].Size = Vector3.new(1000,112,1000)
-                else
-                    game:GetService("Workspace").Map["WaterBase-Plane"].Size = Vector3.new(1000,80,1000)
-                end
-            end)
-        end
-    end)
