@@ -1500,6 +1500,7 @@ local kkii = require(game.ReplicatedStorage.Util.CameraShaker)
 kkii:Stop()
 
 
+
 ---------------------------------------------------------------------------------------------------------------
 local Level = Tabs.Main:AddSection("Level Farm")
 local ToggleAutoLevel = Tabs.Main:AddToggle("ToggleAutoLevel", {Title = "Auto Farm Level", Default = _G.AutoLevel })
